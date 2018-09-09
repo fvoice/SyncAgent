@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenBom2", "GenBom2\GenBom2.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenBomDefault", "GenBomDefault\GenBomDefault.csproj", "{A317FBCC-38B5-44C1-A105-EAF9AB1A1E77}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncAgent.Tests", "SyncAgent.Tests\SyncAgent.Tests.csproj", "{C7F71659-D1BC-45CE-B30F-C7ED3277FE69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{A317FBCC-38B5-44C1-A105-EAF9AB1A1E77}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A317FBCC-38B5-44C1-A105-EAF9AB1A1E77}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A317FBCC-38B5-44C1-A105-EAF9AB1A1E77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7F71659-D1BC-45CE-B30F-C7ED3277FE69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7F71659-D1BC-45CE-B30F-C7ED3277FE69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7F71659-D1BC-45CE-B30F-C7ED3277FE69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7F71659-D1BC-45CE-B30F-C7ED3277FE69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

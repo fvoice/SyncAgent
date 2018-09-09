@@ -1,33 +1,31 @@
 ﻿using System.Collections.Specialized;
 using System.Threading;
 using System.Threading.Tasks;
+using AppDomainsInteraction.Contracts;
 using Quartz;
 using Quartz.Impl;
+using Unity;
 
 namespace AppDomainsInteraction.Scheduler
 {
-	public interface ISyncAgentScheduler
-	{
-		IScheduler Scheduler { get; }
-		Task Start();
-		Task Stop();
-	}
-
 	public class SyncAgentScheduler : ISyncAgentScheduler
 	{
 		private readonly ISchedulerFactory _schedulerFactory;
 		private readonly ISchedulerListener _schedulerListener;
+		private readonly IUnityContainer _container;
+		private IScheduler _scheduler;
 
-		public SyncAgentScheduler(ISchedulerFactory schedulerFactory, ISchedulerListener schedulerListener)
+		public SyncAgentScheduler(ISchedulerFactory schedulerFactory, ISchedulerListener schedulerListener, IUnityContainer container)
 		{
 			_schedulerFactory = schedulerFactory;
 			_schedulerListener = schedulerListener;
+			_container = container;
 		}
-
-		public IScheduler Scheduler { get; private set; }
 
 		public async Task Start()
 		{
+			if (_scheduler != null && _scheduler.IsStarted) return;
+
 			NameValueCollection props = new NameValueCollection
 			{
 				{ "quartz.scheduler.instanceName", "WebSyncScheduler" },
@@ -35,16 +33,32 @@ namespace AppDomainsInteraction.Scheduler
 			};
 			((StdSchedulerFactory)_schedulerFactory).Initialize(props);
 
-			Scheduler = await _schedulerFactory.GetScheduler(CancellationToken.None);
+			_scheduler = await _schedulerFactory.GetScheduler(CancellationToken.None);
 
-			Scheduler.ListenerManager.AddSchedulerListener(_schedulerListener);
+			_scheduler.ListenerManager.AddSchedulerListener(_schedulerListener);
 
-			await Scheduler.Start();
+			await _scheduler.Start();
+
+			//schedule execution of planning task
+			var planTask = _container.Resolve<ISyncAgentTask>(SyncAgentTaskType.JobScheduler.ToString());
+			await planTask.PlanExecution(this);
 		}
 
 		public async Task Stop()
 		{
-			await Scheduler.Shutdown();
+			if (_scheduler.IsShutdown) return;
+
+			await _scheduler.Shutdown();
+		}
+
+		public async Task PlanJob(IJobDetail jobDetail, ITrigger trigger)
+		{
+			await _scheduler.ScheduleJob(jobDetail, trigger);
+		}
+
+		public async Task<bool> CheckJobExists(string jobKey)
+		{
+			return await _scheduler.CheckExists(new JobKey(jobKey));
 		}
 	}
 }

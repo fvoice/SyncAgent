@@ -8,6 +8,6 @@ namespace AppDomainsInteraction.Scheduler
 {
 	public enum SyncAgentTaskType
 	{
-		PlanTasks
+		JobScheduler
 	}
 }
