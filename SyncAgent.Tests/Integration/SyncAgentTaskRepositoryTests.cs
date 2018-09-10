@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using AppDomainsInteraction;
 using AppDomainsInteraction.Contracts;
 using AppDomainsInteraction.Extensions.DI;
 using AppDomainsInteraction.Storage.Model;
@@ -7,6 +9,7 @@ using Quartz.Unity;
 using SyncAgent.Tests.Extensions;
 using SyncAgent.Tests.Integration.Base;
 using Unity;
+using Unity.Resolution;
 
 namespace SyncAgent.Tests.Integration
 {
@@ -19,13 +22,10 @@ namespace SyncAgent.Tests.Integration
 		[TestInitialize]
 		public void Initialize()
 		{
-			_container = new UnityContainer();
-			_container.AddNewExtension<QuartzUnityExtension>();
-			_container.AddNewExtension<SyncAgentUnityExtension>();
+			_container = Bootstrapper.ConfigureContainer();
+			_container.RegisterTestDoubles();
 
 			_repository = _container.Resolve<ISyncAgentTaskRepository>();
-
-			_repository.CleanStorage();
 		}
 
 		[TestCleanup]

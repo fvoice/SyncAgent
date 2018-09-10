@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
+using AppDomainsInteraction;
 using AppDomainsInteraction.Contracts;
 using AppDomainsInteraction.Extensions.DI;
 using AppDomainsInteraction.Scheduler.Jobs;
@@ -8,6 +10,7 @@ using Quartz.Unity;
 using SyncAgent.Tests.Extensions;
 using SyncAgent.Tests.Integration.Base;
 using Unity;
+using Unity.Interception.Utilities;
 
 namespace SyncAgent.Tests.Integration
 {
@@ -16,21 +19,23 @@ namespace SyncAgent.Tests.Integration
 	{
 		private IUnityContainer _container;
 		private ISyncAgentScheduler _scheduler;
+		private ISyncAgentTaskRepository _repository;
 
 		[TestInitialize]
 		public void Initialize()
 		{
-			_container = new UnityContainer();
-			_container.AddNewExtension<QuartzUnityExtension>();
-			_container.AddNewExtension<SyncAgentUnityExtension>();
+			_container = Bootstrapper.ConfigureContainer();
+			_container.RegisterTestDoubles();
 
 			_scheduler = _container.Resolve<ISyncAgentScheduler>();
+			_repository = _container.Resolve<ISyncAgentTaskRepository>();
 		}
 
 		[TestCleanup]
 		public void Cleanup()
 		{
 			_scheduler.Stop();
+			_repository.CleanStorage();
 		}
 
 		[TestMethod]

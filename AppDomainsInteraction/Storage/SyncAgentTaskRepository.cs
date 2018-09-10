@@ -4,15 +4,16 @@ using System.IO;
 using AppDomainsInteraction.Contracts;
 using AppDomainsInteraction.Storage.Model;
 using LiteDB;
+using Unity.Attributes;
 
 namespace AppDomainsInteraction.Storage
 {
 	public class SyncAgentTaskRepository : ISyncAgentTaskRepository
 	{
-		private readonly string _storageFileName = "SyncAgentTasks.db"; 
+		protected readonly string _storageFileName = "SyncAgentTasks.db"; 
 		private readonly string _storageFileNamePath = "Storage"; //todo to config
 
-		public string StoragePath => Path.Combine(_storageFileNamePath, _storageFileName);
+		public virtual string StoragePath => Path.Combine(_storageFileNamePath, _storageFileName);
 
 		public SyncAgentTaskRepository()
 		{

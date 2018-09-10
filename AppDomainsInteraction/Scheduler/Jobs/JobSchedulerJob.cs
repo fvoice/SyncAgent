@@ -68,7 +68,7 @@ namespace AppDomainsInteraction.Scheduler.Jobs
 		public async Task PlanExecution(ISyncAgentScheduler scheduler, Dictionary<string, object> dataParams = null)
 		{
 			IJobDetail job = JobBuilder.Create<JobSchedulerJob>()
-				//.WithIdentity(nameof(JobSchedulerJob))
+				.WithIdentity(nameof(JobSchedulerJob))
 				.Build();
 
 			ITrigger trigger = TriggerBuilder.Create()

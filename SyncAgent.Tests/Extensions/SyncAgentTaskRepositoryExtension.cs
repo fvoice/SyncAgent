@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using AppDomainsInteraction.Contracts;
+using Unity.Interception.Utilities;
 
 namespace SyncAgent.Tests.Extensions
 {
@@ -7,10 +8,8 @@ namespace SyncAgent.Tests.Extensions
 	{
 		public static void CleanStorage(this ISyncAgentTaskRepository repository)
 		{
-			if (File.Exists(repository.StoragePath))
-			{
-				File.Delete(repository.StoragePath);
-			}
+			var tasksStoragePath = Path.GetDirectoryName(repository.StoragePath);
+			if (tasksStoragePath != null) Directory.GetFiles(tasksStoragePath).ForEach(File.Delete);
 		}
 	}
 }

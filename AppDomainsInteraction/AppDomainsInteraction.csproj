@@ -95,8 +95,6 @@
     <Compile Include="Contracts\ISyncAgentScheduler.cs" />
     <Compile Include="Contracts\ISyncAgentTaskRepository.cs" />
     <Compile Include="Extensions\DI\SyncAgentUnityExtension.cs" />
-    <Compile Include="Isolated.cs" />
-    <Compile Include="IsolatedWork.cs" />
     <Compile Include="Isolation\IsolatedWork.cs" />
     <Compile Include="Isolation\IsolatedWorkContainer.cs" />
     <Compile Include="Isolation\IsolatedWorkParameters.cs" />

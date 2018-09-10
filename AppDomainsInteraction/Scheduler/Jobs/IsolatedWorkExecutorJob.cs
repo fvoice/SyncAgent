@@ -34,6 +34,8 @@ namespace AppDomainsInteraction.Scheduler.Jobs
 
 					var action = new Action<IsolatedWorkParameters>((isolatedParameters) =>
 					{
+						//we are in another AppDomain
+
 						var isolatedLogger = LogManager.GetCurrentClassLogger();
 						var isolatedSyncAgentTask = isolatedParameters.SyncAgentTask;
 						try
@@ -83,25 +85,5 @@ namespace AppDomainsInteraction.Scheduler.Jobs
 			}
 			throw new ArgumentException($"Parameter {nameof(SyncAgentTask)} is required to plan execution of {nameof(IsolatedWorkExecutorJob)}");
 		}
-
-		//private void IsolatedExecute(IsolatedWorkParameters parameters)
-		//{
-		//	var isolatedLogger = LogManager.GetCurrentClassLogger();
-		//	var syncAgentTask = parameters.SyncAgentTask;
-		//	try
-		//	{
-		//		var isolatedContainer = Bootstrapper.ConfigureChildContainer();
-
-		//		var scenario = isolatedContainer.Resolve<ISyncAgentScenario>(syncAgentTask.Scenario);
-
-		//		scenario.Initialize(syncAgentTask);
-		//		scenario.ExecuteCurrentStage();
-		//		scenario.NextStage();
-		//	}
-		//	catch (Exception e)
-		//	{
-		//		isolatedLogger.Warn(e);
-		//	}
-		//}
 	}
 }

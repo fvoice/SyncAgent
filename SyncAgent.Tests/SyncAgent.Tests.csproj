@@ -90,11 +90,13 @@
   <ItemGroup>
     <Compile Include="Extensions\CustomAssertExtension.cs" />
     <Compile Include="Extensions\SyncAgentTaskRepositoryExtension.cs" />
+    <Compile Include="Extensions\UnityExtension.cs" />
     <Compile Include="Integration\Base\BaseTests.cs" />
     <Compile Include="Integration\Base\CustomAssert.cs" />
     <Compile Include="Integration\SyncAgentSchedulerTests.cs" />
     <Compile Include="Integration\SyncAgentTaskRepositoryTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Test doubles\SyncAgentTaskRepositoryConcurrent.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
