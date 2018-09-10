@@ -8,6 +8,7 @@ namespace AppDomainsInteraction.Scheduler
 {
 	public enum SyncAgentTaskType
 	{
-		JobScheduler
+		JobScheduler,
+		IsolatedWorkExecutor
 	}
 }

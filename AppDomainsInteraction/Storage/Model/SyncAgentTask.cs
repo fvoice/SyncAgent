@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Threading.Tasks;
-using AppDomainsInteraction.Contracts;
-using AppDomainsInteraction.Scheduler.Jobs;
-using Quartz;
 
 namespace AppDomainsInteraction.Storage.Model
 {
 	[Serializable]
-	public class SyncAgentTask : ISyncAgentTask
+	public class SyncAgentTask
 	{
 		public SyncAgentTask()
 		{
@@ -22,6 +18,8 @@ namespace AppDomainsInteraction.Storage.Model
 
 		public string Login { get; set; }
 
+		public string ConnectionId { get; set; }
+
 		public SyncAgentTaskState State { get; set; }
 
 		public DateTime? Started { get; set; }
@@ -29,20 +27,5 @@ namespace AppDomainsInteraction.Storage.Model
 		public DateTime? Finished { get; set; }
 
 		public DateTime? Planned { get; set; }
-
-		public async Task PlanExecution(ISyncAgentScheduler scheduler)
-		{
-			IJobDetail job = JobBuilder.Create<IsolatedWorkExecutorJob>()
-				.WithIdentity(Id.ToString(), nameof(IsolatedWorkExecutorJob))
-				.Build();
-
-			ITrigger trigger = TriggerBuilder.Create()
-				.StartNow()
-				.Build();
-
-			job.JobDataMap.Put(nameof(SyncAgentTask), this);
-
-			await scheduler.PlanJob(job, trigger);
-		}
 	}
 }

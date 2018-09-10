@@ -29,18 +29,18 @@ namespace AppDomainsInteraction.Scheduler
 			NameValueCollection props = new NameValueCollection
 			{
 				{ "quartz.scheduler.instanceName", "WebSyncScheduler" },
-				{ "quartz.threadPool.threadCount", "10" } //todo config
+				{ "quartz.threadPool.threadCount", "20" } //todo config
 			};
 			((StdSchedulerFactory)_schedulerFactory).Initialize(props);
 
 			_scheduler = await _schedulerFactory.GetScheduler(CancellationToken.None);
 
-			_scheduler.ListenerManager.AddSchedulerListener(_schedulerListener);
+			//_scheduler.ListenerManager.AddSchedulerListener(_schedulerListener);
 
 			await _scheduler.Start();
 
 			//schedule execution of planning task
-			var planTask = _container.Resolve<ISyncAgentTask>(SyncAgentTaskType.JobScheduler.ToString());
+			var planTask = _container.Resolve<ISyncAgentJob>(SyncAgentTaskType.JobScheduler.ToString());
 			await planTask.PlanExecution(this);
 		}
 

@@ -88,18 +88,35 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Bootstrapper.cs" />
+    <Compile Include="Contracts\IIsolatedWorkPool.cs" />
+    <Compile Include="Contracts\ISyncAgentScenarioStage.cs" />
+    <Compile Include="Contracts\ISyncAgentScenario.cs" />
     <Compile Include="Contracts\ISyncAgentScheduler.cs" />
     <Compile Include="Contracts\ISyncAgentTaskRepository.cs" />
     <Compile Include="Extensions\DI\SyncAgentUnityExtension.cs" />
     <Compile Include="Isolated.cs" />
     <Compile Include="IsolatedWork.cs" />
+    <Compile Include="Isolation\IsolatedWork.cs" />
+    <Compile Include="Isolation\IsolatedWorkContainer.cs" />
+    <Compile Include="Isolation\IsolatedWorkParameters.cs" />
+    <Compile Include="Isolation\IsolatedWorkPool.cs" />
+    <Compile Include="Scenarios\Base\ScenarioBase.cs" />
+    <Compile Include="Scenarios\Base\StagesBase.cs" />
+    <Compile Include="Scenarios\GettingPlannedTasksScenario\GettingPlannedTasksScenarioServerStages.cs" />
+    <Compile Include="Scenarios\GettingPlannedTasksScenario\GettingPlannedTasksScenarioServer.cs" />
+    <Compile Include="Scenarios\GettingPlannedTasksScenario\GettingPlannedTasksScenarioClient.cs" />
+    <Compile Include="Scenarios\GettingPlannedTasksScenario\GettingPlannedTasksScenarioClientStages.cs" />
+    <Compile Include="Scenarios\GettingPlannedTasksScenario\Stages\Client\ExportRequestingStage.cs" />
+    <Compile Include="Scenarios\GettingPlannedTasksScenario\Stages\Client\ExportWaitingStage.cs" />
     <Compile Include="Scheduler\Jobs\IsolatedWorkExecutorJob.cs" />
     <Compile Include="Scheduler\Jobs\JobSchedulerJob.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Contracts\ISyncAgentTask.cs" />
+    <Compile Include="Contracts\ISyncAgentJob.cs" />
     <Compile Include="Scheduler\SyncAgentScheduler.cs" />
     <Compile Include="Scheduler\SyncAgentSchedulerListener.cs" />
+    <Compile Include="Scenarios\SyncAgentScenario.cs" />
     <Compile Include="Scheduler\SyncAgentTaskType.cs" />
     <Compile Include="Storage\Model\SyncAgentTask.cs" />
     <Compile Include="Storage\SyncAgentTaskRepository.cs" />
@@ -120,6 +137,9 @@
       <Project>{A317FBCC-38B5-44C1-A105-EAF9AB1A1E77}</Project>
       <Name>GenBomDefault</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Scenarios\GettingPlannedTasksScenario\Stages\Server\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

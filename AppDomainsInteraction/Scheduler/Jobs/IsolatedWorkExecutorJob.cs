@@ -1,117 +1,107 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using AppDomainsInteraction.Storage;
+using AppDomainsInteraction.Contracts;
+using AppDomainsInteraction.Isolation;
 using AppDomainsInteraction.Storage.Model;
-using GenBomDefault;
 using NLog;
 using Quartz;
+using Unity;
 
 namespace AppDomainsInteraction.Scheduler.Jobs
 {
-	public class IsolatedWorkExecutorJob : IJob
+	public class IsolatedWorkExecutorJob : IJob, ISyncAgentJob
 	{
-		readonly Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+		readonly Logger _logger = LogManager.GetCurrentClassLogger();
+		private readonly IUnityContainer _container;
+
+		public IsolatedWorkExecutorJob(IUnityContainer container)
+		{
+			_container = container;
+		}
 
 		public async Task Execute(IJobExecutionContext context)
 		{
 			try
 			{
-				var syncAgentTask = context.MergedJobDataMap[nameof(SyncAgentTask)] as SyncAgentTask;
-				
-
-				//var taskRepository = new SyncAgentTaskRepository();
-				//var tasks = taskRepository.GetPlanned();
-
-				//Stopwatch sw = new Stopwatch();
-				//sw.Start();
-
-				//for (int i = 0; i < 1000; i++)
-				//{
-				//	taskRepository.Save(new SyncAgentTask()
-				//	{
-				//		Id = Guid.NewGuid(),
-				//		Finished = DateTime.Now,
-				//		Login = "Mike",
-				//		Planned = DateTime.Now,
-				//		Scenario = "GettingPlannedTasks",
-				//		Started = DateTime.Now,
-				//		State = SyncAgentTaskState.Planned
-				//	});
-				//}
-				//sw.Stop();
-
-				//sw.Reset();
-				//sw.Start();
-
-				//tasks = taskRepository.GetPlanned();
-
-				//sw.Stop();
-
-
-				using (Isolated<IsolatedWork> isolated = new Isolated<IsolatedWork>())
+				if (context.MergedJobDataMap[nameof(SyncAgentTask)] is SyncAgentTask syncAgentTask)
 				{
-					if (Program.Toggle)
+					//todo check execution lock
+					//todo set execution lock
+					var isolatedPool = _container.Resolve<IIsolatedWorkPool>();
+
+					var parameters = new IsolatedWorkParameters {SyncAgentTask = syncAgentTask};
+
+					var action = new Action<IsolatedWorkParameters>((isolatedParameters) =>
 					{
-						isolated.LoadAssembly(new AssemblyName("GenBom1, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
-					}
-					else
-					{
-						isolated.LoadAssembly(new AssemblyName("GenBom2, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"));
-					}
-
-					//CancellationTokenSource source = new CancellationTokenSource();
-					var token = new CancellationTokenContainer();
-					//token.Token = context.CancellationToken;
-					File.Delete(".cancel");
-
-
-					isolated.Value.Execute((toggle, t) =>
-					{
-						Logger _localLogger = NLog.LogManager.GetCurrentClassLogger();
-
-						var assembliesList = string.Join("\n - ", AppDomain.CurrentDomain.GetAssemblies().Select(x => x.FullName));
-						_localLogger.Info($"{AppDomain.CurrentDomain.FriendlyName} assemblies: \n - {assembliesList}");
-
-						//var entityTypeLocal = toggle ? typeof(GenBom1.Entity) : typeof(GenBom2.Entity);
-
-						var typeString = toggle ? "GenBom1.Entity" : "GenBom2.Entity";
-						var assemblyString = toggle ? "GenBom1, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" : "GenBom2, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
-
-						//var entity = (EntityBase)Activator.CreateInstance(entityTypeLocal);
-						var entity = (EntityBase)Activator.CreateInstance(assemblyString, typeString).Unwrap();
-						entity.Name = "123";
-						entity.Save();
-
-						for (int i = 0; i < 20; i++)
+						var isolatedLogger = LogManager.GetCurrentClassLogger();
+						var isolatedSyncAgentTask = isolatedParameters.SyncAgentTask;
+						try
 						{
-							if (File.Exists(".cancel"))
-							{
-								_localLogger.Info("Task is cancelling");
-								File.Delete(".cancel");
-								break;
-							}
-							_localLogger.Info("Do work");
-							Thread.Sleep(1000);
+							var isolatedContainer = Bootstrapper.ConfigureContainer();
+
+							var scenario = isolatedContainer.Resolve<ISyncAgentScenario>(isolatedSyncAgentTask.Scenario);
+
+							scenario.Initialize(isolatedSyncAgentTask);
+							scenario.ExecuteCurrentStage();
+							scenario.NextStage();
 						}
+						catch (Exception e)
+						{
+							isolatedLogger.Warn(e);
+						}
+					});
 
-						_logger.Info($"IsolatedWork AppDomain - {AppDomain.CurrentDomain.FriendlyName}, Thread - {Thread.CurrentThread.ManagedThreadId}");
-					}, Program.Toggle, token);
-
-					//change a GenBom version
-					Program.Toggle = !Program.Toggle;
+					isolatedPool.ExecuteIsolated(syncAgentTask.ConnectionId, action, parameters);
 				}
 			}
 			catch (Exception e)
 			{
 				_logger.Warn(e);
 			}
-
-			_logger.Error($"IsolatedWorkExecutorJob AppDomain - {AppDomain.CurrentDomain.FriendlyName}, Thread - {Thread.CurrentThread.ManagedThreadId}");
 		}
+
+		public async Task PlanExecution(ISyncAgentScheduler scheduler, Dictionary<string, object> dataParams = null)
+		{
+			if (dataParams != null && dataParams.ContainsKey(nameof(SyncAgentTask))) //todo keys to const
+			{
+				if (dataParams[nameof(SyncAgentTask)] is SyncAgentTask syncAgentTask)
+				{
+					IJobDetail job = JobBuilder.Create<IsolatedWorkExecutorJob>()
+						.WithIdentity(syncAgentTask.Id.ToString())
+						.Build();
+
+					ITrigger trigger = TriggerBuilder.Create()
+						.StartNow()
+						.Build();
+
+					job.JobDataMap.Put(nameof(SyncAgentTask), syncAgentTask);
+
+					await scheduler.PlanJob(job, trigger);
+					return;
+				}
+			}
+			throw new ArgumentException($"Parameter {nameof(SyncAgentTask)} is required to plan execution of {nameof(IsolatedWorkExecutorJob)}");
+		}
+
+		//private void IsolatedExecute(IsolatedWorkParameters parameters)
+		//{
+		//	var isolatedLogger = LogManager.GetCurrentClassLogger();
+		//	var syncAgentTask = parameters.SyncAgentTask;
+		//	try
+		//	{
+		//		var isolatedContainer = Bootstrapper.ConfigureChildContainer();
+
+		//		var scenario = isolatedContainer.Resolve<ISyncAgentScenario>(syncAgentTask.Scenario);
+
+		//		scenario.Initialize(syncAgentTask);
+		//		scenario.ExecuteCurrentStage();
+		//		scenario.NextStage();
+		//	}
+		//	catch (Exception e)
+		//	{
+		//		isolatedLogger.Warn(e);
+		//	}
+		//}
 	}
 }

@@ -52,7 +52,7 @@ namespace SyncAgent.Tests.Integration
 		[TestMethod]
 		public async Task SyncAgentSchedulerShouldStartJobSchedulerJob()
 		{
-			 await _scheduler.Start();
+			await _scheduler.Start();
 
 			var exist = await _scheduler.CheckJobExists(nameof(JobSchedulerJob));
 

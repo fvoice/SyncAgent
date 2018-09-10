@@ -1,22 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AppDomainsInteraction.Contracts;
+using AppDomainsInteraction.Storage.Model;
 using NLog;
 using Quartz;
+using Unity;
 
 namespace AppDomainsInteraction.Scheduler.Jobs
 {
 	[DisallowConcurrentExecution]
-	public class JobSchedulerJob : IJob, ISyncAgentTask
+	public class JobSchedulerJob : IJob, ISyncAgentJob
 	{
 		private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private readonly ISyncAgentTaskRepository _repository;
+		private readonly IUnityContainer _container;
 
-		public JobSchedulerJob(ISyncAgentTaskRepository repository)
+		public JobSchedulerJob(ISyncAgentTaskRepository repository, IUnityContainer container)
 		{
 			_repository = repository;
+			_container = container;
 		}
 
 		public async Task Execute(IJobExecutionContext context)
@@ -31,14 +36,27 @@ namespace AppDomainsInteraction.Scheduler.Jobs
 				//todo pass limit parameter
 				var tasksForPlanning = _repository.GetPlanned();
 
-				var scheduler = context.MergedJobDataMap["Scheduler"] as ISyncAgentScheduler; //todo to cinst
+				if (!(context.MergedJobDataMap["Scheduler"] is ISyncAgentScheduler scheduler))
+				{
+					throw new Exception("Scheduler parameter is required for JobSchedulerJob");
+				}
 
 				foreach (var syncAgentTask in tasksForPlanning)
 				{
-					//todo check if task is already planned
+					if (await scheduler.CheckJobExists(syncAgentTask.Id.ToString()))
+					{
+						continue;
+					}
+					
 					//todo check "plan limit" parameter
 					//todo check task's execution lock mb it is alredy in executing state
-					await syncAgentTask.PlanExecution(scheduler);
+					var syncJob = _container.Resolve<ISyncAgentJob>(SyncAgentTaskType.IsolatedWorkExecutor.ToString());
+					await syncJob.PlanExecution(scheduler, new Dictionary<string, object>()
+					{
+						{
+							nameof(SyncAgentTask), syncAgentTask
+						}
+					});
 				}
 			}
 			catch (Exception e)
@@ -47,10 +65,10 @@ namespace AppDomainsInteraction.Scheduler.Jobs
 			}
 		}
 
-		public async Task PlanExecution(ISyncAgentScheduler scheduler)
+		public async Task PlanExecution(ISyncAgentScheduler scheduler, Dictionary<string, object> dataParams = null)
 		{
 			IJobDetail job = JobBuilder.Create<JobSchedulerJob>()
-				.WithIdentity(nameof(JobSchedulerJob))
+				//.WithIdentity(nameof(JobSchedulerJob))
 				.Build();
 
 			ITrigger trigger = TriggerBuilder.Create()

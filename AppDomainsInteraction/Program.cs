@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AppDomainsInteraction;
 using AppDomainsInteraction.Contracts;
 using AppDomainsInteraction.Extensions.DI;
 using Quartz.Unity;
@@ -11,9 +12,7 @@ public class Program
 
 	private static void Main(string[] args)
 	{
-		IUnityContainer container = new UnityContainer();
-		container.AddNewExtension<QuartzUnityExtension>();
-		container.AddNewExtension<SyncAgentUnityExtension>();
+		var container = Bootstrapper.ConfigureContainer();
 
 		RunProgram(container).GetAwaiter().GetResult();
 
@@ -28,9 +27,9 @@ public class Program
 			var scheduler = container.Resolve<ISyncAgentScheduler>();
 			await scheduler.Start();
 		}
-		catch (Exception se)
+		catch (Exception e)
 		{
-			Console.WriteLine(se);
+			Console.WriteLine(e);
 		}
 	}
 }
